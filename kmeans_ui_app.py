@@ -5,7 +5,7 @@ from sklearn.cluster import KMeans
 from io import StringIO
 
 st.set_page_config(page_title="K-Means Clustering UI", layout="wide")
-st.title("📊 K-Means Clustering dengan Tabel Iterasi")
+st.title("K-Means Clustering")
 
 uploaded_file = st.file_uploader("Upload file CSV", type=["csv"])
 
