@@ -122,7 +122,7 @@ if data is not None:
 
     # Scatter centroid juga dengan posisi dibalik
     ax.scatter(reduced_centroids[:, 1], reduced_centroids[:, 0],
-               c='red', s=100, marker='X', label='Centroid')
+               color='red', s=100, marker='X', label='Centroid')
 
     # Tambahkan legenda untuk tiap klaster
     for cluster_id in range(k):
