@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 from io import StringIO
 
 st.set_page_config(page_title="K-Means Clustering UI", layout="wide")
@@ -59,32 +61,38 @@ if data is not None:
     initial_indices = np.random.choice(len(data), size=k, replace=False)
     centroids = data[initial_indices]
 
+    converged = False  # Untuk menandai apakah centroid sudah stabil
+
     for iter_num in range(1, max_iter + 1):
         distances = np.linalg.norm(data[:, np.newaxis] - centroids, axis=2)
         labels = np.argmin(distances, axis=1)
         sse = np.sum((data - centroids[labels]) ** 2)
-        cluster_headers = [f"Centeroid {i + 1}" for i in range(k)]
+
+        cluster_headers = [f"Centroid {i + 1}" for i in range(k)]
         iter_table = pd.DataFrame(distances, columns=cluster_headers)
         iter_table.insert(0, "Data ke", data_index)
         iter_table["Terdekat"] = labels
-        iter_table["Cluster"] = labels + 1 
+        iter_table["Cluster"] = labels + 1
 
         st.markdown(f"### Iterasi ke-{iter_num}")
         st.dataframe(iter_table.style.format(precision=6))
         st.write("**SSE:**", round(sse, 6))
 
-        # Update centroid
         new_centroids = np.array([
             data[labels == i].mean(axis=0) if np.any(labels == i) else centroids[i] for i in range(k)
         ])
 
         if np.allclose(new_centroids, centroids):
             st.info("Centroid tidak berubah. Iterasi dihentikan.")
+            converged = True
             break
 
         centroids = new_centroids
 
-    # Tampilkan label klaster akhir
+    if not converged:
+        st.warning("Iterasi telah mencapai batas maksimal.")
+
+    # Tampilkan hasil akhir
     final_labels = labels
     if feature_columns:
         df_result = original_df[feature_columns].copy()
@@ -94,5 +102,38 @@ if data is not None:
     df_result['Cluster'] = final_labels + 1
     st.subheader("📌 Hasil Akhir K-Means")
     st.dataframe(df_result)
+
+    # Visualisasi
+    st.subheader("📈 Visualisasi Hasil Clustering (2D)")
+
+    if data.shape[1] > 2:
+        pca = PCA(n_components=2)
+        reduced_data = pca.fit_transform(data)
+        reduced_centroids = pca.transform(centroids)
+    else:
+        reduced_data = data
+        reduced_centroids = centroids
+
+    fig, ax = plt.subplots(figsize=(8, 6))  # Horizontal layout (lebar lebih besar)
+
+    # Tukar posisi X dan Y agar orientasi horizontal
+    scatter = ax.scatter(reduced_data[:, 1], reduced_data[:, 0],
+                         c=final_labels, cmap='viridis', label='Data', alpha=0.6)
+
+    # Scatter centroid juga dengan posisi dibalik
+    ax.scatter(reduced_centroids[:, 1], reduced_centroids[:, 0],
+               c='red', s=100, marker='X', label='Centroid')
+
+    # Tambahkan legenda untuk tiap klaster
+    for cluster_id in range(k):
+        ax.scatter([], [], c=plt.cm.viridis(cluster_id / k), label=f"Cluster {cluster_id + 1}")
+
+    ax.set_title("Visualisasi Klaster dan Centroid (Orientasi Horizontal)")
+    ax.set_xlabel("Komponen PCA 2 (Horizontal)")
+    ax.set_ylabel("Komponen PCA 1 (Vertikal)")
+    ax.legend(loc='upper right')
+
+    st.pyplot(fig)
+
 else:
     st.info("Silakan upload file CSV atau masukkan data manual untuk memulai.")
