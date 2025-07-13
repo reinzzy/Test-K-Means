@@ -103,8 +103,8 @@ if data is not None:
     st.subheader("📌 Hasil Akhir K-Means")
     st.dataframe(df_result)
 
-    # Visualisasi
-    st.subheader("📈 Visualisasi Hasil Clustering (2D)")
+        # Visualisasi
+    st.subheader("Hasil Clustering KMeans")
 
     if data.shape[1] > 2:
         pca = PCA(n_components=2)
@@ -114,24 +114,29 @@ if data is not None:
         reduced_data = data
         reduced_centroids = centroids
 
-    fig, ax = plt.subplots(figsize=(8, 6))  # Horizontal layout (lebar lebih besar)
+    # Warna untuk masing-masing cluster agar konsisten
+    cluster_colors = [plt.cm.viridis(i / k) for i in range(k)]
 
-    # Tukar posisi X dan Y agar orientasi horizontal
-    scatter = ax.scatter(reduced_data[:, 1], reduced_data[:, 0],
-                         c=final_labels, cmap='viridis', label='Data', alpha=0.6)
+    fig, ax = plt.subplots(figsize=(5, 4))  # Ukuran kecil agar pas di layar
 
-    # Scatter centroid juga dengan posisi dibalik
-    ax.scatter(reduced_centroids[:, 1], reduced_centroids[:, 0],
-               color='red', s=100, marker='X', label='Centroid')
-
-    # Tambahkan legenda untuk tiap klaster
+    # Scatter data per cluster, warnanya sinkron dan label manual
     for cluster_id in range(k):
-        ax.scatter([], [], c=plt.cm.viridis(cluster_id / k), label=f"Cluster {cluster_id + 1}")
+        cluster_points = reduced_data[final_labels == cluster_id]
+        ax.scatter(cluster_points[:, 1], cluster_points[:, 0],
+                   color=cluster_colors[cluster_id],
+                   label=f"Cluster {cluster_id + 1}", alpha=0.6)
 
-    ax.set_title("Visualisasi Klaster dan Centroid (Orientasi Horizontal)")
-    ax.set_xlabel("Komponen PCA 2 (Horizontal)")
-    ax.set_ylabel("Komponen PCA 1 (Vertikal)")
-    ax.legend(loc='upper right')
+    # Scatter centroid, warna merah
+    ax.scatter(reduced_centroids[:, 1], reduced_centroids[:, 0],
+               color='red', s=60, marker='X', label='Centroid')
+
+    ax.set_title("Visualisasi Klaster (Orientasi Horizontal)", fontsize=10)
+    ax.set_xlabel("Komponen PCA 2 (Horizontal)", fontsize=9)
+    ax.set_ylabel("Komponen PCA 1 (Vertikal)", fontsize=9)
+    ax.tick_params(axis='both', labelsize=8)
+
+    # Legend hanya tampil untuk cluster 1-3 dan centroid
+    ax.legend(loc='upper right', fontsize=8)
 
     st.pyplot(fig)
 
