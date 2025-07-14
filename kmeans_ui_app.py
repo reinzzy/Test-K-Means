@@ -118,7 +118,7 @@ if data is not None:
     ax.tick_params(axis='both', labelsize=8)
     ax.legend(loc='upper right', fontsize=8)
 
-    st.pyplot(fig)
+    st.pyplot(fig, use_container_width=False)
 
     # elbow method
     st.subheader("Elbow Method")
@@ -136,7 +136,7 @@ if data is not None:
     ax_elbow.set_xlabel("Jumlah Cluster (k)")
     ax_elbow.set_ylabel("WCSS")
     ax_elbow.grid(True)
-    st.pyplot(fig_elbow)
+    st.pyplot(fig_elbow, use_container_width=False)
 
 else:
     st.info("Silakan upload file CSV untuk memulai proses clustering.")
