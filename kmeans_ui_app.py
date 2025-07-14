@@ -10,11 +10,10 @@ st.title("K-Means Clustering")
 
 uploaded_file = st.file_uploader("Upload file CSV", type=["csv"])
 
-# Parameter K dan max_iter
 k = st.slider("Pilih jumlah kluster (k):", min_value=1, max_value=10, value=3)
 max_iter = st.slider("Maksimal jumlah iterasi:", min_value=1, max_value=100, value=10)
 
-# Load Data
+# proses data
 data = None
 data_index = None
 feature_columns = None
@@ -78,7 +77,7 @@ if data is not None:
     if not converged:
         st.warning("Iterasi telah mencapai batas maksimal.")
 
-    # Tampilkan hasil akhir
+    # menampilkan hasil akhir
     final_labels = labels
     if feature_columns:
         df_result = original_df[feature_columns].copy()
@@ -89,7 +88,7 @@ if data is not None:
     st.subheader("HASIL AKHIR K-MEANS")
     st.dataframe(df_result)
 
-    # Visualisasi
+    # hasil visualisasi diagram centroid
     st.subheader("Hasil Clustering KMeans")
 
     if data.shape[1] > 2:
@@ -121,7 +120,7 @@ if data is not None:
 
     st.pyplot(fig)
 
-    # Elbow Method
+    # elbow method
     st.subheader("Elbow Method")
 
     sse_list = []
