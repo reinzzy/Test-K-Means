@@ -4,15 +4,11 @@ import streamlit as st
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
-from io import StringIO
 
 st.set_page_config(page_title="K-Means Clustering UI", layout="wide")
 st.title("K-Means Clustering")
 
 uploaded_file = st.file_uploader("Upload file CSV", type=["csv"])
-
-manual_input = st.text_area("Atau masukkan data manual (pisahkan dengan koma dan newline)",
-                             placeholder="Contoh:\n1.2, 3.4\n5.6, 7.8")
 
 # Parameter K dan max_iter
 k = st.slider("Pilih jumlah kluster (k):", min_value=1, max_value=10, value=3)
@@ -45,14 +41,6 @@ if uploaded_file:
     st.write("## Data yang Digunakan untuk Clustering:", df.head())
     data = df.values
     data_index = original_df.index + 1
-elif manual_input:
-    try:
-        lines = manual_input.strip().split("\n")
-        data = np.array([[float(val) for val in line.split(",")] for line in lines])
-        st.write("## Data yang Dimasukkan:", pd.DataFrame(data))
-        data_index = np.arange(1, len(data) + 1)
-    except Exception as e:
-        st.error("Format input manual salah. Gunakan koma dan newline.")
 
 if data is not None:
     st.subheader("📋 Proses Iterasi K-Means")
@@ -61,12 +49,11 @@ if data is not None:
     initial_indices = np.random.choice(len(data), size=k, replace=False)
     centroids = data[initial_indices]
 
-    converged = False  # Untuk menandai apakah centroid sudah stabil
+    converged = False
 
     for iter_num in range(1, max_iter + 1):
         distances = np.linalg.norm(data[:, np.newaxis] - centroids, axis=2)
         labels = np.argmin(distances, axis=1)
-        sse = np.sum((data - centroids[labels]) ** 2)
 
         cluster_headers = [f"Centroid {i + 1}" for i in range(k)]
         iter_table = pd.DataFrame(distances, columns=cluster_headers)
@@ -76,7 +63,6 @@ if data is not None:
 
         st.markdown(f"### Iterasi ke-{iter_num}")
         st.dataframe(iter_table.style.format(precision=6))
-        st.write("**SSE:**", round(sse, 6))
 
         new_centroids = np.array([
             data[labels == i].mean(axis=0) if np.any(labels == i) else centroids[i] for i in range(k)
@@ -100,10 +86,10 @@ if data is not None:
         df_result = pd.DataFrame(data, columns=[f"Fitur {i + 1}" for i in range(data.shape[1])])
 
     df_result['Cluster'] = final_labels + 1
-    st.subheader("📌 Hasil Akhir K-Means")
+    st.subheader("HASIL AKHIR K-MEANS")
     st.dataframe(df_result)
 
-        # Visualisasi
+    # Visualisasi
     st.subheader("Hasil Clustering KMeans")
 
     if data.shape[1] > 2:
@@ -114,19 +100,16 @@ if data is not None:
         reduced_data = data
         reduced_centroids = centroids
 
-    # Warna untuk masing-masing cluster agar konsisten
     cluster_colors = [plt.cm.viridis(i / k) for i in range(k)]
 
-    fig, ax = plt.subplots(figsize=(5, 4))  # Ukuran kecil agar pas di layar
+    fig, ax = plt.subplots(figsize=(5, 4))
 
-    # Scatter data per cluster, warnanya sinkron dan label manual
     for cluster_id in range(k):
         cluster_points = reduced_data[final_labels == cluster_id]
         ax.scatter(cluster_points[:, 1], cluster_points[:, 0],
                    color=cluster_colors[cluster_id],
                    label=f"Cluster {cluster_id + 1}", alpha=0.6)
 
-    # Scatter centroid, warna merah
     ax.scatter(reduced_centroids[:, 1], reduced_centroids[:, 0],
                color='red', s=60, marker='X', label='Centroid')
 
@@ -134,11 +117,27 @@ if data is not None:
     ax.set_xlabel("Komponen PCA 2 (Horizontal)", fontsize=9)
     ax.set_ylabel("Komponen PCA 1 (Vertikal)", fontsize=9)
     ax.tick_params(axis='both', labelsize=8)
-
-    # Legend hanya tampil untuk cluster 1-3 dan centroid
     ax.legend(loc='upper right', fontsize=8)
 
     st.pyplot(fig)
 
+    # Elbow Method
+    st.subheader("Elbow Method")
+
+    sse_list = []
+    max_k = min(10, len(data))
+    for i in range(1, max_k + 1):
+        km = KMeans(n_clusters=i, random_state=42, n_init=10)
+        km.fit(data)
+        sse_list.append(km.inertia_)
+
+    fig_elbow, ax_elbow = plt.subplots()
+    ax_elbow.plot(range(1, max_k + 1), sse_list, marker='o')
+    ax_elbow.set_title("Elbow Method")
+    ax_elbow.set_xlabel("Jumlah Cluster (k)")
+    ax_elbow.set_ylabel("WCSS")
+    ax_elbow.grid(True)
+    st.pyplot(fig_elbow)
+
 else:
-    st.info("Silakan upload file CSV atau masukkan data manual untuk memulai.")
+    st.info("Silakan upload file CSV untuk memulai proses clustering.")
